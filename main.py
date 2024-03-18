@@ -144,7 +144,7 @@ def create():
     return
 
   except Exception as e:
-    if exit(user_input) == True:
+    if exit(user_input) is True:
       clear()
       return
     print("Invalid input.")
@@ -307,9 +307,122 @@ def select():
       clear()
       select()
 
+    
     # edit quiz
     elif user_input == 2:
-      pass
+      
+      # get questions from quiz selected
+      edit_sql = "SELECT question_id FROM quiz_question WHERE quiz_id = ?"
+      c.execute(edit_sql, (id[0][0], ))
+      question_ids = c.fetchall()
+
+      print("You have selected to edit the quiz.")
+      print("NOTE: Editing a quiz will clear the leaderboard.\n")
+
+      # while loop so i can go back here
+      while True:
+        print("What question would you like to edit?\n")
+        user_input = ""
+        x = 0 # number I use for da loop
+        
+        # print all da questions
+        for row in question_ids:
+          row = row[0]
+  
+          # get question
+          edit_sql2 = "SELECT question FROM question_table WHERE id = ?"
+          c.execute(edit_sql2, (row, ))
+          questions = c.fetchall()
+  
+          print(f"{x+1}. {questions[0][0]}")
+          x += 1
+          
+        x = 0
+        user_input = input("")
+        user_input = int(user_input)
+        question_id = user_input
+
+        # get da question
+        edit_sql3 = "SELECT question FROM question_table WHERE id = ?"
+        c.execute(edit_sql3, (question_ids[user_input-1][0], ))
+        question = c.fetchall()
+        
+        # get da answer
+        edit_sql4 = "SELECT answer FROM question_table WHERE id = ?"
+        c.execute(edit_sql4, (question_ids[user_input-1][0], ))
+        answer = c.fetchall()
+
+        clear()
+        
+        print(f"Question: {question[0][0]}")
+        print(f"Answer: {answer[0][0]}\n")
+
+        print("What would you like to edit?")
+        print(" 1. Question\n 2. Answer\n 3. Delete question\n 4. Back")
+
+        user_input = input("")
+        user_input = int(user_input)
+
+        clear()
+
+        # edit question + clear leaderboard
+        if user_input == 1:
+          print("What would you like to change the question to?")
+          print(f"Old question: {question[0][0]}")
+
+          user_input = input("New question: ")
+
+          # change question in table
+          edit_sql5 = "UPDATE question_table SET question = ? WHERE id = ?"
+          c.execute(edit_sql5, (user_input, question_id, ))
+          con.commit()
+
+          # clear leaderboard
+          edit_sql6 = "DELETE FROM quiz_leaderboard WHERE quiz_id = ?"
+          c.execute(edit_sql6, (id[0][0], ))
+          con.commit()
+
+          clear()
+
+        # edit answer + clear leaderboard
+        elif user_input == 2:
+          print("What would you like to change the answer to?")
+          print(f"Old answer: {answer[0][0]}")
+
+          user_input = input("New answer: ")
+
+          # change answer in table
+          edit_sql7 = "UPDATE question_table SET answer = ? WHERE id = ?"
+          c.execute(edit_sql7, (user_input, question_id, ))
+          con.commit()
+
+          # clear leaderboard
+          edit_sql8 = "DELETE FROM quiz_leaderboard WHERE quiz_id = ?"
+          c.execute(edit_sql8, (id[0][0], ))
+          con.commit()
+  
+          clear()
+
+        # delete question + clear leaderboard
+        elif user_input == 3:
+          # delete question
+          edit_sql9 = "DELETE FROM question_table WHERE id = ?"
+          c.execute(edit_sql9, (question_id, ))
+          con.commit()
+
+          # delete question from quiz
+          edit_sql10 = "DELETE FROM quiz_question WHERE question_id = ?"
+          c.execute(edit_sql10, (question_id, ))
+          con.commit()
+          
+          print("Question deleted.")
+          time.sleep(2)
+
+        # loops back to edit
+        elif user_input == 4:
+          pass
+
+    # Change it !
 
     # delete quiz
     elif user_input == 3:
