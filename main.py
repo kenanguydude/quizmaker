@@ -310,33 +310,35 @@ def select():
     
     # edit quiz
     elif user_input == 2:
-      
-      # get questions from quiz selected
-      edit_sql = "SELECT question_id FROM quiz_question WHERE quiz_id = ?"
-      c.execute(edit_sql, (id[0][0], ))
-      question_ids = c.fetchall()
-
       print("You have selected to edit the quiz.")
       print("NOTE: Editing a quiz will clear the leaderboard.\n")
-
+      
       # while loop so i can go back here
       while True:
+        # get questions from quiz selected
+        edit_sql = "SELECT question_id FROM quiz_question WHERE quiz_id = ?"
+        c.execute(edit_sql, (id[0][0], ))
+        question_ids = c.fetchall()
+
         print("What question would you like to edit?\n")
         user_input = ""
         x = 0 # number I use for da loop
         
         # print all da questions
         for row in question_ids:
-          row = row[0]
-  
-          # get question
-          edit_sql2 = "SELECT question FROM question_table WHERE id = ?"
-          c.execute(edit_sql2, (row, ))
-          questions = c.fetchall()
-  
-          print(f"{x+1}. {questions[0][0]}")
-          x += 1
-          
+          try:
+            row = row[0]
+    
+            # get question
+            edit_sql2 = "SELECT question FROM question_table WHERE id = ?"
+            c.execute(edit_sql2, (row, ))
+            questions = c.fetchall()
+    
+            print(f" {x+1}. {questions[0][0]}")
+            x += 1
+          except IndexError:
+            continue
+
         x = 0
         user_input = input("")
         user_input = int(user_input)
@@ -363,6 +365,8 @@ def select():
         user_input = input("")
         user_input = int(user_input)
 
+        delete_quiz_sql = "DELETE FROM quiz_leaderboard WHERE quiz_id = ?"
+        
         clear()
 
         # edit question + clear leaderboard
@@ -373,13 +377,12 @@ def select():
           user_input = input("New question: ")
 
           # change question in table
-          edit_sql5 = "UPDATE question_table SET question = ? WHERE id = ?"
-          c.execute(edit_sql5, (user_input, question_id, ))
+          edit_sql5 = "UPDATE question_table SET question = ? WHERE question = ?"
+          c.execute(edit_sql5, (user_input, question[0][0], ))
           con.commit()
 
           # clear leaderboard
-          edit_sql6 = "DELETE FROM quiz_leaderboard WHERE quiz_id = ?"
-          c.execute(edit_sql6, (id[0][0], ))
+          c.execute(delete_quiz_sql, (id[0][0], ))
           con.commit()
 
           clear()
@@ -392,13 +395,12 @@ def select():
           user_input = input("New answer: ")
 
           # change answer in table
-          edit_sql7 = "UPDATE question_table SET answer = ? WHERE id = ?"
-          c.execute(edit_sql7, (user_input, question_id, ))
+          edit_sql6 = "UPDATE question_table SET answer = ? WHERE answer = ?"
+          c.execute(edit_sql6, (user_input, answer[0][0], ))
           con.commit()
 
           # clear leaderboard
-          edit_sql8 = "DELETE FROM quiz_leaderboard WHERE quiz_id = ?"
-          c.execute(edit_sql8, (id[0][0], ))
+          c.execute(delete_quiz_sql, (id[0][0], ))
           con.commit()
   
           clear()
@@ -406,13 +408,18 @@ def select():
         # delete question + clear leaderboard
         elif user_input == 3:
           # delete question
-          edit_sql9 = "DELETE FROM question_table WHERE id = ?"
-          c.execute(edit_sql9, (question_id, ))
+          print(question_id)
+          edit_sql7 = "DELETE FROM question_table WHERE question = ?"
+          c.execute(edit_sql7, (question[0][0],))
           con.commit()
 
           # delete question from quiz
-          edit_sql10 = "DELETE FROM quiz_question WHERE question_id = ?"
-          c.execute(edit_sql10, (question_id, ))
+          edit_sql8 = "DELETE FROM quiz_question WHERE question_id = ?"
+          c.execute(edit_sql8, (question[0][0],))
+          con.commit()
+
+          # clear leaderboard
+          c.execute(delete_quiz_sql, (id[0][0], ))
           con.commit()
           
           print("Question deleted.")
@@ -421,8 +428,7 @@ def select():
         # loops back to edit
         elif user_input == 4:
           pass
-
-    # Change it !
+          
 
     # delete quiz
     elif user_input == 3:
