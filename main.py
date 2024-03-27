@@ -17,14 +17,25 @@ def interface():
       print(
           "Welcome to Quiz Maker.\n 1. Create a new quiz\n 2. Select a quiz\n 3. Exit"
       )
+
       nav = int(input(""))
       clear()
+
+      # Create a new quiz
       if nav == 1:
         create()
+
+      # Select a quiz
       elif nav == 2:
         select()
+
+      # Exit
       elif nav == 3:
         quit()
+
+      elif nav == 4:
+        debug()
+      
       else:
         raise ValueError
 
@@ -185,7 +196,7 @@ def select():
     query = "SELECT id FROM quiz WHERE name = ?"
     c.execute(query, (selected_quiz, ))
     id = c.fetchall()
-    
+
     query = "SELECT desc FROM quiz WHERE name = ?"
     c.execute(query, (selected_quiz, ))
     desc = c.fetchall()
@@ -194,7 +205,9 @@ def select():
     print(f'You have selected "{selected_quiz}".')
     print(f'"{desc[0][0]}"')
 
-    print(" 1. Take quiz\n 2. Edit quiz\n 3. Delete quiz\n 4. View leaderboard\n 5. Back")
+    print(
+        " 1. Take quiz\n 2. Edit quiz\n 3. Delete quiz\n 4. View leaderboard\n 5. Back"
+    )
     user_input = input("")
     user_input = int(user_input)
 
@@ -307,12 +320,11 @@ def select():
       clear()
       select()
 
-    
     # edit quiz
     elif user_input == 2:
       print("You have selected to edit the quiz.")
       print("NOTE: Editing a quiz will clear the leaderboard.\n")
-      
+
       # while loop so i can go back here
       while True:
         # get questions from quiz selected
@@ -322,18 +334,18 @@ def select():
 
         print("What question would you like to edit?\n")
         user_input = ""
-        x = 0 # number I use for da loop
-        
+        x = 0  # number I use for da loop
+
         # print all da questions
         for row in question_ids:
           try:
             row = row[0]
-    
+
             # get question
             edit_sql2 = "SELECT question FROM question_table WHERE id = ?"
             c.execute(edit_sql2, (row, ))
             questions = c.fetchall()
-    
+
             print(f" {x+1}. {questions[0][0]}")
             x += 1
           except IndexError:
@@ -346,16 +358,16 @@ def select():
 
         # get da question
         edit_sql3 = "SELECT question FROM question_table WHERE id = ?"
-        c.execute(edit_sql3, (question_ids[user_input-1][0], ))
+        c.execute(edit_sql3, (question_ids[user_input - 1][0], ))
         question = c.fetchall()
-        
+
         # get da answer
         edit_sql4 = "SELECT answer FROM question_table WHERE id = ?"
-        c.execute(edit_sql4, (question_ids[user_input-1][0], ))
+        c.execute(edit_sql4, (question_ids[user_input - 1][0], ))
         answer = c.fetchall()
 
         clear()
-        
+
         print(f"Question: {question[0][0]}")
         print(f"Answer: {answer[0][0]}\n")
 
@@ -366,7 +378,7 @@ def select():
         user_input = int(user_input)
 
         delete_quiz_sql = "DELETE FROM quiz_leaderboard WHERE quiz_id = ?"
-        
+
         clear()
 
         # edit question + clear leaderboard
@@ -378,7 +390,10 @@ def select():
 
           # change question in table
           edit_sql5 = "UPDATE question_table SET question = ? WHERE question = ?"
-          c.execute(edit_sql5, (user_input, question[0][0], ))
+          c.execute(edit_sql5, (
+              user_input,
+              question[0][0],
+          ))
           con.commit()
 
           # clear leaderboard
@@ -396,13 +411,16 @@ def select():
 
           # change answer in table
           edit_sql6 = "UPDATE question_table SET answer = ? WHERE answer = ?"
-          c.execute(edit_sql6, (user_input, answer[0][0], ))
+          c.execute(edit_sql6, (
+              user_input,
+              answer[0][0],
+          ))
           con.commit()
 
           # clear leaderboard
           c.execute(delete_quiz_sql, (id[0][0], ))
           con.commit()
-  
+
           clear()
 
         # delete question + clear leaderboard
@@ -410,25 +428,24 @@ def select():
           # delete question
           print(question_id)
           edit_sql7 = "DELETE FROM question_table WHERE question = ?"
-          c.execute(edit_sql7, (question[0][0],))
+          c.execute(edit_sql7, (question[0][0], ))
           con.commit()
 
           # delete question from quiz
           edit_sql8 = "DELETE FROM quiz_question WHERE question_id = ?"
-          c.execute(edit_sql8, (question[0][0],))
+          c.execute(edit_sql8, (question[0][0], ))
           con.commit()
 
           # clear leaderboard
           c.execute(delete_quiz_sql, (id[0][0], ))
           con.commit()
-          
+
           print("Question deleted.")
           time.sleep(2)
 
         # loops back to edit
         elif user_input == 4:
           pass
-          
 
     # delete quiz
     elif user_input == 3:
@@ -462,12 +479,12 @@ def select():
       query = "SELECT question_id FROM quiz_question WHERE quiz_id = ?"
       c.execute(query, (id[0][0], ))
       rows = c.fetchall()
-      
+
       print(f"{selected_quiz} Leaderboard:\n\n")
       print("NAME - SCORE\n")
       for row in leaderboard:
         print(f"{row[0]} - {row[1]}/{len(rows)}")
-      
+
       user_input = input("\nPress enter to continue. ")
       clear()
       select()
@@ -496,9 +513,18 @@ def select():
     clear()
     select()
 
+def debug():
+  query = input("Write your query here: ")
+  c.execute(query)
+  results = c.fetchall()
+  for row in results:
+    print(row)
+  a = input("Press enter to continue. ")
+
 
 def exit(input):
   if str(input).lower() == "exit":
     return True
+
 
 interface()
