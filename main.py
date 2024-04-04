@@ -31,11 +31,12 @@ def interface():
 
       # Exit
       elif nav == 3:
+        con.close()
         quit()
 
       elif nav == 4:
         debug()
-      
+
       else:
         raise ValueError
 
@@ -200,7 +201,7 @@ def select():
     query = "SELECT desc FROM quiz WHERE name = ?"
     c.execute(query, (selected_quiz, ))
     desc = c.fetchall()
-
+    
     clear()
     print(f'You have selected "{selected_quiz}".')
     print(f'"{desc[0][0]}"')
@@ -335,6 +336,7 @@ def select():
         print("What question would you like to edit?\n")
         user_input = ""
         x = 0  # number I use for da loop
+        question_list = []
 
         # print all da questions
         for row in question_ids:
@@ -346,6 +348,8 @@ def select():
             c.execute(edit_sql2, (row, ))
             questions = c.fetchall()
 
+            if questions != []:
+              question_list.append(questions)
             print(f" {x+1}. {questions[0][0]}")
             x += 1
           except IndexError:
@@ -425,14 +429,14 @@ def select():
 
         # delete question + clear leaderboard
         elif user_input == 3:
-          # delete question
-          print(question_id)
-          edit_sql7 = "DELETE FROM question_table WHERE question = ?"
+
+          # delete question from quiz
+          edit_sql7 = "DELETE FROM quiz_question WHERE question_id = (SELECT id FROM question_table WHERE question = ?)"
           c.execute(edit_sql7, (question[0][0], ))
           con.commit()
 
-          # delete question from quiz
-          edit_sql8 = "DELETE FROM quiz_question WHERE question_id = ?"
+          # delete question
+          edit_sql8 = "DELETE FROM question_table WHERE question = ?"
           c.execute(edit_sql8, (question[0][0], ))
           con.commit()
 
@@ -496,33 +500,31 @@ def select():
     else:
       raise ValueError
 
-    # TO DO
-    # make sure user input is valid (?)
-    # print leaderboard and add user to leaderboard
-    # edit quizzes
-    # print leaderboard from selection
-
   except Exception as e:
-    # clear()
+    # clear() ?
     if exit(user_input) is True:
       clear()
       return
+    
     print("Invalid input.")
-    print(e)
+    print(e) # remove this after done testing!!
+    
     a = input("Press enter to continue.")
     clear()
-    select()
 
-def debug():
-  query = input("Write your query here: ")
-  c.execute(query)
-  results = c.fetchall()
-  for row in results:
-    print(row)
-  a = input("Press enter to continue. ")
+
+# def debug():
+#   query = input("Write your query here: ")
+#   c.execute(query)
+#   results = c.fetchall()
+#   for row in results:
+#     print(row)
+#   a = input("Press enter to continue. ")
+#   clear()
 
 
 def exit(input):
+  """If user input is ever 'exit', should bring back user to menu"""
   if str(input).lower() == "exit":
     return True
 
