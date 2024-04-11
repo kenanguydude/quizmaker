@@ -7,18 +7,22 @@ c = con.cursor()
 
 
 def clear():
+  """Clears console, makes it look nice"""
   os.system("clear")
 
 
 def interface():
-  """The main menu."""
+  """The Main menu"""
+
+  # this loop goes on forever until the user quits
+  # typing 'exit' at any point brings you back here
   while True:
     try:
       print(
-          "Welcome to Quiz Maker.\n 1. Create a new quiz\n 2. Select a quiz\n 3. Exit"
+          "Welcome to Quiz Maker.\n\n 1. Create a new quiz\n 2. Select a quiz\n 3. Exit"
       )
 
-      nav = int(input(""))
+      nav = int(input())
       clear()
 
       # Create a new quiz
@@ -34,9 +38,6 @@ def interface():
         con.close()
         quit()
 
-      elif nav == 4:
-        debug()
-
       else:
         raise ValueError
 
@@ -47,19 +48,28 @@ def interface():
       clear()
 
 
-# edit quiz
-
-
 def create():
   """Create a quiz."""
+  
   print("You can exit back to the menu at any time by typing 'exit'")
   user_input = 0
   try:
+    
     # get name
     user_input = input("Enter the name of the quiz: ")
-    if user_input == "exit":
+    if exit(user_input) is True:
       clear()
       return
+
+    # boundary case: name is Blank!
+    while user_input == "":
+      clear()
+      print("Your quiz needs a name!")
+      user_input = input("Enter the name of the quiz: ")
+      
+      if exit(user_input) is True:
+        clear()
+        return
 
     name = user_input
 
@@ -68,16 +78,16 @@ def create():
     c.execute(sql, (name, ))
     already_existing_name = c.fetchall()
 
-    # quiz exists, user start again
+    # quiz exists, sends user to menu
     if len(already_existing_name) != 0:
       print("Quiz already exists.")
       time.sleep(1)
       clear()
-      create()
+      return
 
-    # get description
+    # get description (I don't mind if it's blank)
     user_input = input("Enter the description of the quiz: ")
-    if user_input == "exit":
+    if exit(user_input) is True:
       clear()
       return
 
@@ -86,7 +96,7 @@ def create():
     # insert into table
     sql2 = "INSERT INTO quiz (name, desc) VALUES (?, ?)"
     c.execute(sql2, (name, description))
-    con.commit()  # ?
+    con.commit()
     clear()
 
     # get id for that quiz
@@ -95,37 +105,76 @@ def create():
     id = c.fetchall()
     id = id[0][0]
 
-    x = 0
+    x = 0 # number i use for the loop
     while True:
+      
+      # find if quiz has questions or not
+      sql7 = "SELECT * FROM quiz_question WHERE quiz_id = ?"
+      c.execute(sql7, (id, ))
+      questions = c.fetchall()
+
       print(f"{name}")
-      print(
-          "Type exit to completely stop. Type stop the quiz at this question.\n"
-      )
+      print("Type exit to stop at anytime.\n")
 
       print(f"Question {x+1}.\n")
+      
       # get question
       user_input = input("Enter the question: ")
-      if user_input == "exit":
-        clear()
-        return
-      elif user_input == "stop":
-        clear()
-        break
+
+      # boundary case: Question is blank
+      while user_input == "":
+        print("The question can't be blank, Silly")
+        user_input = input("Enter the question: ")
+
+      if exit(user_input) is True:
+
+        # if the quiz has questions, user goes back as normal
+        if len(questions) != 0:
+          clear()
+          return
+
+        # otherwise Boundary case time Woohoo
+        print("Your quiz has no questions!\n")
+        while True:
+          user_input = input("Enter the question: ")
+          if user_input == "":
+            print("The question can't be blank, Silly")
+          elif exit(user_input) is True:
+            print("Your quiz STILL has no questions!")
+          else:
+            break
 
       question = user_input
 
       # get answer
       user_input = input("Enter the answer: ")
-      if user_input == "exit":
-        clear()
-        return
-      elif user_input == "stop":
-        clear()
-        break
+
+      while user_input == "":
+        print("The answer can't be blank, Silly")
+        user_input = input("Enter the question: ")
+        print("\n")
+
+      if exit(user_input) is True:
+
+        # if the quiz has questions, user goes back as normal
+        if len(questions) != 0:
+          clear()
+          return
+
+        # otherwise Boundary case time Woohoo
+        print("Your quiz has no questions!\n")
+        while True:
+          user_input = input("Enter the answer: ")
+          if user_input == "":
+            print("The answer can't be blank, Silly")
+          elif exit(user_input) is True:
+            print("Your quiz STILL has no questions!")
+          else:
+            break
 
       answer = user_input
 
-      # put question in question_table
+      # put question and answer in question_table
       sql4 = "INSERT INTO question_table (question, answer) VALUES (?, ?)"
       c.execute(sql4, (question, answer))
       con.commit()
@@ -136,37 +185,30 @@ def create():
       id_question = c.fetchall()
       id_question = id_question[0][0]
 
-      # put question in quiz
+      # assign question to quiz
       sql6 = "INSERT INTO quiz_question (quiz_id, question_id) VALUES (?, ?)"
       c.execute(sql6, (id, id_question))
       con.commit()
 
       user_input = input(
-          "Press enter to keep adding questions, or type 'stop' to finish. ")
+          "Press enter to keep adding questions, or type 'exit' to finish. ")
 
-      if user_input == "exit" or user_input == "stop":
+      if exit(user_input) is True:
         clear()
-        break
+        return
 
       else:
         x += 1
         clear()
-        pass
+        # loop again !
 
-    return
-
-  except Exception as e:
+  except Exception:
     if exit(user_input) is True:
       clear()
       return
     print("Invalid input.")
-    print(e)
-    a = input("Press enter to continue. ")
-
-  # TO DO
-  # multi answered questions
-  # ask for correct answers in case of multi answer
-  # delete quiz if quiz has 0 questions
+    time.sleep(2)
+    clear()
 
 
 def select():
@@ -194,14 +236,16 @@ def select():
     # the selected quiz
     selected_quiz = quiz_rows[user_input - 1][0]
 
+    # get id of quiz
     query = "SELECT id FROM quiz WHERE name = ?"
     c.execute(query, (selected_quiz, ))
     id = c.fetchall()
 
+    # get description of quiz
     query = "SELECT desc FROM quiz WHERE name = ?"
     c.execute(query, (selected_quiz, ))
     desc = c.fetchall()
-    
+
     clear()
     print(f'You have selected "{selected_quiz}".')
     print(f'"{desc[0][0]}"')
@@ -255,7 +299,8 @@ def select():
           a = input("Press enter to continue. ")
           score += 1
 
-        elif user_input == "exit":
+        # user wants to go back to menu
+        elif exit(user_input) is True:
           clear()
           return
 
@@ -268,7 +313,7 @@ def select():
       x = 0
       clear()
 
-      # print score and leaderboard here (at some point)
+      # print score and leaderboard here
       print(f"You have finished the quiz '{selected_quiz}'.")
       print(f"You got {score} out of {len(rows)} correct.\n")
 
@@ -381,7 +426,7 @@ def select():
         user_input = input("")
         user_input = int(user_input)
 
-        delete_quiz_sql = "DELETE FROM quiz_leaderboard WHERE quiz_id = ?"
+        delete_quiz_lb_sql = "DELETE FROM quiz_leaderboard WHERE quiz_id = ?"
 
         clear()
 
@@ -401,7 +446,7 @@ def select():
           con.commit()
 
           # clear leaderboard
-          c.execute(delete_quiz_sql, (id[0][0], ))
+          c.execute(delete_quiz_lb_sql, (id[0][0], ))
           con.commit()
 
           clear()
@@ -422,7 +467,7 @@ def select():
           con.commit()
 
           # clear leaderboard
-          c.execute(delete_quiz_sql, (id[0][0], ))
+          c.execute(delete_quiz_lb_sql, (id[0][0], ))
           con.commit()
 
           clear()
@@ -441,7 +486,7 @@ def select():
           con.commit()
 
           # clear leaderboard
-          c.execute(delete_quiz_sql, (id[0][0], ))
+          c.execute(delete_quiz_lb_sql, (id[0][0], ))
           con.commit()
 
           print("Question deleted.")
@@ -458,7 +503,7 @@ def select():
       # yes
       if sure == "y":
         sql = "DELETE FROM quiz WHERE name=?"
-        c.execute(sql, (quiz_rows[user_input - 1][0], ))
+        c.execute(sql, (selected_quiz, ))
         con.commit()
         clear()
         print("Quiz deleted successfully.")
@@ -474,6 +519,7 @@ def select():
         raise ValueError
 
     elif user_input == 4:
+      
       # get leaderboard
       query = "SELECT name, score FROM quiz_leaderboard WHERE quiz_id = ? ORDER BY score DESC"
       c.execute(query, (id[0][0], ))
@@ -486,6 +532,8 @@ def select():
 
       print(f"{selected_quiz} Leaderboard:\n\n")
       print("NAME - SCORE\n")
+
+      # name - score/total questions
       for row in leaderboard:
         print(f"{row[0]} - {row[1]}/{len(rows)}")
 
@@ -500,27 +548,14 @@ def select():
     else:
       raise ValueError
 
-  except Exception as e:
-    # clear() ?
+  except Exception:
     if exit(user_input) is True:
       clear()
       return
-    
+
     print("Invalid input.")
-    print(e) # remove this after done testing!!
-    
-    a = input("Press enter to continue.")
+    time.sleep(2)
     clear()
-
-
-# def debug():
-#   query = input("Write your query here: ")
-#   c.execute(query)
-#   results = c.fetchall()
-#   for row in results:
-#     print(row)
-#   a = input("Press enter to continue. ")
-#   clear()
 
 
 def exit(input):
