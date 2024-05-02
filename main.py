@@ -1,7 +1,8 @@
 import os
-import time
 import sqlite3
+import time
 
+# connect to database
 con = sqlite3.connect("quiz.db")
 c = con.cursor()
 
@@ -50,11 +51,11 @@ def interface():
 
 def create():
   """Create a quiz."""
-  
+
   print("You can exit back to the menu at any time by typing 'exit'")
   user_input = 0
   try:
-    
+
     # get name
     user_input = input("Enter the name of the quiz: ")
     if exit(user_input) is True:
@@ -66,7 +67,7 @@ def create():
       clear()
       print("Your quiz needs a name!")
       user_input = input("Enter the name of the quiz: ")
-      
+
       if exit(user_input) is True:
         clear()
         return
@@ -105,9 +106,9 @@ def create():
     id = c.fetchall()
     id = id[0][0]
 
-    x = 0 # number i use for the loop
+    x = 0  # number i use for the loop
     while True:
-      
+
       # find if quiz has questions or not
       sql7 = "SELECT * FROM quiz_question WHERE quiz_id = ?"
       c.execute(sql7, (id, ))
@@ -117,7 +118,7 @@ def create():
       print("Type exit to stop at anytime.\n")
 
       print(f"Question {x+1}.\n")
-      
+
       # get question
       user_input = input("Enter the question: ")
 
@@ -212,22 +213,18 @@ def create():
 
 
 def select():
-  """Selects a quiz from the database. Take it, delete it, edit it or view the leaderboard."""
+  """Selects a quiz from database. You can take, delete, edit or view leaderboard."""
   print("You can exit back to the menu at any time by typing 'exit'")
   user_input = 0
   try:
-    x = 0  # number i use for for loops
-
     print("What quiz would you like to select?")
 
     # get quizzes
     query = "SELECT name FROM quiz"
     c.execute(query)
     quiz_rows = c.fetchall()
-    for row in quiz_rows:
+    for x, row in enumerate(quiz_rows):
       print(f"{x+1}. {row[0]}")
-      x += 1
-    x = 0
 
     # user inputs the quiz they want to select
     user_input = input("")
@@ -270,13 +267,12 @@ def select():
       rows = c.fetchall()
 
       # print all questions one by one
-      for row in rows:
+      for x, row in enumerate(rows):
         clear()
         row = row[0]
 
         print(f"{selected_quiz}")
         print(f"Question {x+1}:\n")
-        x += 1
 
         # find and print question
         sql2 = "SELECT question FROM question_table WHERE id=?"
@@ -310,7 +306,6 @@ def select():
           a = input("Press enter to continue. ")
 
       # done
-      x = 0
       clear()
 
       # print score and leaderboard here
@@ -357,10 +352,8 @@ def select():
       rowsleaderboard = c.fetchall()
 
       print("NAME - SCORE\n")
-      for row in rowsleaderboard:
+      for x, row in enumerate(rowsleaderboard):
         print(f"{x+1}. {row[0]} - {row[1]}/{len(rows)}")
-        x += 1
-      x = 0
 
       a = input("\n\nPress enter to continue. ")
       clear()
@@ -380,11 +373,10 @@ def select():
 
         print("What question would you like to edit?\n")
         user_input = ""
-        x = 0  # number I use for da loop
         question_list = []
 
         # print all da questions
-        for row in question_ids:
+        for x, row in enumerate(question_ids):
           try:
             row = row[0]
 
@@ -396,11 +388,9 @@ def select():
             if questions != []:
               question_list.append(questions)
             print(f" {x+1}. {questions[0][0]}")
-            x += 1
           except IndexError:
             continue
 
-        x = 0
         user_input = input("")
         user_input = int(user_input)
         question_id = user_input
@@ -519,7 +509,7 @@ def select():
         raise ValueError
 
     elif user_input == 4:
-      
+
       # get leaderboard
       query = "SELECT name, score FROM quiz_leaderboard WHERE quiz_id = ? ORDER BY score DESC"
       c.execute(query, (id[0][0], ))
